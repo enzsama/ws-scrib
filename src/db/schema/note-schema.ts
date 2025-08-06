@@ -8,7 +8,11 @@ import {
 import { user } from "./auth-schema.js";
 import { sql } from "drizzle-orm";
 
-const bytea = customType<{ data: Uint8Array; notNull: true; default: true }>({
+const bytea = customType<{
+  data: Uint8Array<ArrayBufferLike>;
+  notNull: true;
+  default: true;
+}>({
   dataType() {
     return "bytea";
   },
@@ -16,11 +20,11 @@ const bytea = customType<{ data: Uint8Array; notNull: true; default: true }>({
     return value;
   },
   fromDriver(value) {
-    return new Uint8Array(value as ArrayBuffer);
+    return new Uint8Array<ArrayBufferLike>(value as ArrayBufferLike);
   },
 });
 
-// TODO: AFTER SETUP WITH YDOC, BLOCKNOTE AND SOCKET.IO, NEED TO ADD A FIELD FOR NOTE TYPE: COLLABORATIVE OR PERSONAL, ALSO WHETHER IT'S PUBLIC OR PRIVATE
+// TODO: NEED TO ADD A FIELD FOR NOTE TYPE: COLLABORATIVE OR PERSONAL, ALSO WHETHER IT'S PUBLIC OR PRIVATE
 export const note = pgTable("note", {
   id: text()
     .primaryKey()
