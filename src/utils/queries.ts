@@ -41,7 +41,18 @@ export const getCollaborator = async (noteId: string, userId: string) => {
 
 export const updateNote = async (
   noteId: string,
+  newTitle: string,
   newContent: Uint8Array<ArrayBufferLike>
 ) => {
-  await db.update(note).set({ content: newContent }).where(eq(note.id, noteId));
+  if (newTitle.length > 0) {
+    await db
+      .update(note)
+      .set({ title: newTitle, content: newContent })
+      .where(eq(note.id, noteId));
+  } else {
+    await db
+      .update(note)
+      .set({ title: "Untitled", content: newContent })
+      .where(eq(note.id, noteId));
+  }
 };
