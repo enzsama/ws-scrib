@@ -1,10 +1,12 @@
+import "dotenv/config";
 import { WebSocketServer } from "ws";
 import { createYjsServer } from "yjs-server";
 import * as Y from "yjs";
 import docStorage from "./utils/docStorage.js";
 import authorize from "./utils/authorize.js";
+import env from "./env.js";
 
-const PORT = 8080;
+const PORT = env.PORT;
 const wss = new WebSocketServer({ port: PORT });
 const yjss = createYjsServer({
   createDoc: () => new Y.Doc(),
