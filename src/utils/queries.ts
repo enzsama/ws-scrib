@@ -1,6 +1,10 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "../db/drizzle.js";
-import { note, noteCollaborator } from "../db/schema/note-schema.js";
+import {
+  note,
+  noteCollaborator,
+  noteEmbedding,
+} from "../db/schema/note-schema.js";
 import { session } from "../db/schema/auth-schema.js";
 
 export const getNote = async (noteId: string) => {
@@ -23,7 +27,7 @@ export const getSession = async (sessionToken: string) => {
   return currentSession;
 };
 
-export const getCollaborator = async (noteId: string, userId: string) => {
+export const checkCollaborator = async (noteId: string, userId: string) => {
   const [collaborator] = await db
     .select()
     .from(noteCollaborator)
@@ -35,7 +39,9 @@ export const getCollaborator = async (noteId: string, userId: string) => {
     )
     .limit(1);
 
-  if (collaborator) return true;
+  if (collaborator) {
+    return true;
+  }
   return false;
 };
 
@@ -52,7 +58,19 @@ export const updateNote = async (
   } else {
     await db
       .update(note)
-      .set({ title: "Untitled", content: newContent })
+      .set({ title: "Untitled", content: newContent, updatedAt: new Date() })
       .where(eq(note.id, noteId));
   }
+};
+
+export const checkNoteEmbedding = async (noteId: string) => {
+  const noteEmbeddings = await db
+    .select()
+    .from(noteEmbedding)
+    .where(eq(noteEmbedding.noteId, noteId));
+
+  if (noteEmbeddings) {
+    return true;
+  }
+  return false;
 };

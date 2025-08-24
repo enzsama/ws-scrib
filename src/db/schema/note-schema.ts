@@ -1,12 +1,18 @@
+import { sql } from "drizzle-orm";
 import {
+  bigserial,
+  customType,
+  jsonb,
+  pgEnum,
   pgTable,
   primaryKey,
   text,
   timestamp,
-  customType,
+  uniqueIndex,
+  uuid,
+  vector,
 } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema.js";
-import { sql } from "drizzle-orm";
 
 const bytea = customType<{
   data: Uint8Array<ArrayBufferLike>;
@@ -24,32 +30,57 @@ const bytea = customType<{
   },
 });
 
+const userRoleEnum = pgEnum("user_role", ["owner", "admin", "editor"]);
+
 // TODO: NEED TO ADD A FIELD FOR NOTE TYPE: COLLABORATIVE OR PERSONAL, ALSO WHETHER IT'S PUBLIC OR PRIVATE
 export const note = pgTable("note", {
-  id: text()
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
+  id: uuid("id").primaryKey().defaultRandom(),
   ownerId: text("owner_id")
     .notNull()
-    .references(() => user.id),
+    .references(() => user.id, { onDelete: "cascade" }),
   title: text("title").notNull().default("Untitled"),
   content: bytea("content")
     .notNull()
     .default(sql`'\\x'`),
-  createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 export const noteCollaborator = pgTable(
   "note_collaborator",
   {
-    noteId: text("note_id")
+    noteId: uuid("note_id")
       .notNull()
       .references(() => note.id, { onDelete: "cascade" }),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    role: text("role").default("editor").notNull(),
+    role: userRoleEnum("role").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
-  (table) => [primaryKey({ columns: [table.noteId, table.userId] })]
+  (table) => [
+    primaryKey({ columns: [table.noteId, table.userId] }),
+    uniqueIndex("unique_note_owner")
+      .on(table.noteId)
+      .where(sql`${table.role} = 'owner'`),
+  ]
 );
+
+export const noteEmbedding = pgTable("note_embedding", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  noteId: uuid("note_id")
+    .notNull()
+    .references(() => note.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  embedding: vector("embedding", { dimensions: 1536 }),
+  metadata: jsonb("metadata").$type<Record<string, any>>(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
