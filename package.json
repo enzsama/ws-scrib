@@ -2,19 +2,22 @@
   "name": "ws-scrib",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
+  "main": "./dist/server.js",
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
     "dev": "node --watch ./dist/server.js",
-    "start": "node ./dist/server.js"
+    "start": "node ./dist/server.js",
+    "postinstall": "npm run build"
   },
   "devDependencies": {
     "@types/node": "^24.1.0",
-    "@types/ws": "^8.18.1"
+    "@types/ws": "^8.18.1",
+    "typescript": "^5.9.2"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.1",
